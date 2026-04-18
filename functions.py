@@ -1,5 +1,5 @@
 # ============================================
-# ARTS - Almar Reporting and Tracking System
+# ARTS - Accounts Receivable Tracking System
 # functions.py - Shared Functions Library
 # Converted from Clipper FUNCTION.PRG
 # ============================================

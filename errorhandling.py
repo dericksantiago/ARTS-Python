@@ -1,5 +1,5 @@
 # ============================================
-# ARTS - Almar Reporting and Tracking System
+# ARTS - Accounts Receivable Tracking System
 # errorhandling.py - Error Handling Lesson
 # Like ERRORSYS.PRG and ERRDISP.PRG in Clipper
 # ============================================

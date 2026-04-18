@@ -1,5 +1,5 @@
 # ============================================
-# ARTS - Almar Reporting and Tracking System
+# ARTS - Accounts Receivable Tracking System
 # database.py - Database Setup & Operations
 # Replaces all 26 DBF files with arts.db
 # ============================================

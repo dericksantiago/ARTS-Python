@@ -1,5 +1,5 @@
 # ============================================
-# ARTS - Almar Reporting and Tracking System
+# ARTS - Accounts Receivable and Tracking System
 # fileio.py - File I/O Lesson
 # ============================================
 
@@ -24,7 +24,7 @@ def save_invoice_report(invoice):
 
     with open(filename, "w") as f:
         f.write("=" * 50 + "\n")
-        f.write("      ALMAR REPORTING & TRACKING SYSTEM\n")
+        f.write("      ARTS - ACCOUNTS RECEIVABLE TRACKING SYSTEM\n")
         f.write("             INVOICE REPORT\n")
         f.write("=" * 50 + "\n")
         f.write(f"P.O. NUMBER : {invoice['ponum']}\n")

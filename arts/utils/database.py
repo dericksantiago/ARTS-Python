@@ -1,6 +1,7 @@
 # ============================================
-# ARTS - Almar Reporting and Tracking System
+# ARTS - Accounts Receivable Reporting and Tracking System
 # utils/database.py - Database Layer
+# ARTS Database Layer
 # Replaces all 26 DBF files
 # ============================================
 

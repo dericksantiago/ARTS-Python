@@ -1,5 +1,5 @@
 # ============================================
-# ARTS - Almar Reporting and Tracking System
+# ARTS - Accounts Receivable and Tracking System
 # main.py - Application Entry Point
 # Converted from ARTS.PRG
 # ============================================
@@ -22,7 +22,7 @@ def run():
     from .utils.functions import draw_box
     draw_box([
         "",
-        "ALMAR REPORTING AND",
+        "ACCOUNTS RECEIVABLE REPORTING AND",
         "TRACKING SYSTEM",
         "",
         "A  R  T  S",

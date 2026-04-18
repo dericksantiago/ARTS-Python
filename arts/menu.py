@@ -1,5 +1,5 @@
 # ============================================
-# ARTS - Almar Reporting and Tracking System
+# ARTS - Accounts Receivable Tracking System
 # menu.py - Main Menu
 # Converted from MENUMAIN.PRG
 # ============================================

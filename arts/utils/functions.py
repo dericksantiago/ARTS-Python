@@ -1,5 +1,5 @@
 # ============================================
-# ARTS - Almar Reporting and Tracking System
+# ARTS - Accounts Receivable Tracking System
 # utils/functions.py - Shared Functions
 # Converted from FUNCTION.PRG / BOXHEAD.PRG
 # ============================================

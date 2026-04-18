@@ -1,5 +1,5 @@
 # ============================================
-# ARTS - Almar Reporting and Tracking System
+# ARTS - Accounts Receivable Tracking System
 # modules/customers.py - Customer Module
 # Converted from TM10.PRG / TBLUPD.PRG
 # ============================================

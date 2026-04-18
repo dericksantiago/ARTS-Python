@@ -1,5 +1,5 @@
 # ============================================
-# ARTS - Almar Reporting and Tracking System
+# ARTS - Accounts Receivable Tracking System
 # utils/errors.py - Custom Exception Classes
 # Converted from ERRORSYS.PRG / ERRDISP.PRG
 # ============================================
