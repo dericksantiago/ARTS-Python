@@ -172,3 +172,81 @@ def calc_balance_due(rate=0, congestion=0, port_fee=0,
 def calc_balance(original, amount_paid):
     """Calculates remaining balance"""
     return round(float(original) - float(amount_paid), 2)
+
+# Party type codes
+PARTY_TYPES = {
+    "C" : "Customer",
+    "B" : "Broker",
+    "X" : "Both (Customer & Broker)"
+}
+
+# Bill To options
+BILLTO_OPTIONS = {
+    "CUST" : "Customer",
+    "CONS" : "Consignee",
+    "BROK" : "Broker",
+    "SHPR" : "Shipper"
+}
+
+def find_party(code):
+    """Find any party by code"""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT * FROM party WHERE code = ?",
+        (code,))
+    row = cursor.fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+def search_parties(term, party_type=None):
+    """
+    Search parties by name or lookupid.
+    party_type: C=Customers only,
+                B=Brokers only,
+                None=All parties
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    if party_type:
+        cursor.execute("""
+            SELECT * FROM party
+            WHERE (name LIKE ?
+            OR lookupid LIKE ?
+            OR code LIKE ?)
+            AND party_type IN (?, 'X')
+            AND active = 'Y'
+            ORDER BY name
+        """, (f"%{term}%", f"%{term}%",
+              f"%{term}%", party_type))
+    else:
+        cursor.execute("""
+            SELECT * FROM party
+            WHERE (name LIKE ?
+            OR lookupid LIKE ?
+            OR code LIKE ?)
+            AND active = 'Y'
+            ORDER BY name
+        """, (f"%{term}%", f"%{term}%",
+              f"%{term}%"))
+
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+def get_billing_party(billto, custmr,
+                      cnsnee, broker, shipper):
+    """
+    Resolves billing party code based on
+    BILL TO selection.
+    Business Rule: Any party can pay the bill.
+    """
+    mapping = {
+        "CUST" : custmr,
+        "CONS" : cnsnee,
+        "BROK" : broker,
+        "SHPR" : shipper
+    }
+    billcod = mapping.get(billto, custmr)
+    return find_party(billcod)
