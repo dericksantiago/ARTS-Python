@@ -21,63 +21,65 @@ def get_connection():
 def create_tables():
     """
     Creates all ARTS database tables.
-    Schema v4.0 - Party/Role model
+    Schema v4.0 - contact/Role model
     
     Business Rules:
     - Customer, Consignee, Broker, Shipper 
-      are all PARTIES
-    - A party can play multiple roles
-    - Any party can be the billing party
-    - Rates are stored per party
+      are all contacts
+    - A contact can play multiple roles
+    - Any contact can be the billing contact
+    - Rates are stored per contact
     """
     conn = get_connection()
     cursor = conn.cursor()
 
-    # PARTY table
-    # Replaces both CUSTOMER.DBF and BROKER.DBF
-    # A party can be a customer, broker, or both
-    # party_type: C=Customer, B=Broker, X=Both
+    # CONTACT table
+    # Replaces CUSTOMER.DBF and BROKER.DBF
+    # Stores all external business contacts
+    # contact_type: CUSTOMER, BROKER,
+    #               TERMINAL, BOTH
+    # Sub-haulers are in EMPLOYEE table
+    # because they get paid not billed
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS party (
-            code        TEXT PRIMARY KEY,
-            lookupid    TEXT UNIQUE,
-            name        TEXT NOT NULL,
-            street      TEXT DEFAULT '',
-            city        TEXT DEFAULT '',
-            zip         TEXT DEFAULT '',
-            phone       TEXT DEFAULT '',
-            fax         TEXT DEFAULT '',
-            attn        TEXT DEFAULT '',
-            party_type  TEXT DEFAULT 'C',
-            active      TEXT DEFAULT 'Y'
+        CREATE TABLE IF NOT EXISTS contact (
+            code            TEXT PRIMARY KEY,
+            lookupid        TEXT UNIQUE,
+            name            TEXT NOT NULL,
+            street          TEXT DEFAULT '',
+            city            TEXT DEFAULT '',
+            zip             TEXT DEFAULT '',
+            phone           TEXT DEFAULT '',
+            fax             TEXT DEFAULT '',
+            attn            TEXT DEFAULT '',
+            contact_type    TEXT DEFAULT 'CUSTOMER',
+            active          TEXT DEFAULT 'Y'
         )
     """)
 
-    # PARTY_RATES table
-    # Rate schedule per party per charge type
-    # Business Rules:
-    # - Each party has unique rates
-    # - Rate fixed until rate change
-    # - Not all charges apply to every party
+    # CONTACT_RATES table
+    # Rate schedule per contact
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS party_rates (
+        CREATE TABLE IF NOT EXISTS contact_rates (
             id              INTEGER PRIMARY KEY
                             AUTOINCREMENT,
-            party_code      TEXT NOT NULL,
+            contact_code    TEXT NOT NULL,
             charge_type     TEXT NOT NULL,
             amount          REAL DEFAULT 0,
             effective_date  TEXT DEFAULT '',
             end_date        TEXT DEFAULT '',
             active          TEXT DEFAULT 'Y',
-            FOREIGN KEY (party_code)
-                REFERENCES party(code),
-            UNIQUE(party_code, charge_type,
+            FOREIGN KEY (contact_code)
+                REFERENCES contact(code),
+            UNIQUE(contact_code, charge_type,
                    effective_date)
         )
     """)
 
-    # EMPLOYEE table
-    # Drivers and staff
+  # EMPLOYEE table
+    # Stores drivers AND sub-haulers
+    # emp_type: D=Driver, S=Sub-hauler
+    # Sub-haulers get paid per delivery
+    # but are never invoiced by ARTS
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS employee (
             emp_id      TEXT PRIMARY KEY,
@@ -91,52 +93,48 @@ def create_tables():
             dlicense    TEXT DEFAULT '',
             truckno     TEXT DEFAULT '',
             alias       TEXT DEFAULT '',
+            emp_type    TEXT DEFAULT 'D',
             active      TEXT DEFAULT 'Y'
         )
     """)
 
-    # DELIVERY ORDER table - header
-    # All parties reference the PARTY table
-    # custmr  = who ordered the delivery
-    # cnsnee  = where container delivered to
-    # shipper = pickup location/terminal
-    # broker  = customs broker
-    # billto  = who pays (CUST/CONS/BROK/SHPR)
-    # billcod = actual party code who pays
+   # DELIVERY ORDER table
+    # All roles reference CONTACT table
+    # except drivers which reference EMPLOYEE
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS delivery_order (
-            donum       TEXT PRIMARY KEY,
-            dodat       TEXT DEFAULT '',
-            custmr      TEXT DEFAULT '',
-            cnsnee      TEXT DEFAULT '',
-            broker      TEXT DEFAULT '',
-            shipper     TEXT DEFAULT '',
-            vessel      TEXT DEFAULT '',
-            voyage      TEXT DEFAULT '',
-            dest        TEXT DEFAULT '',
-            papdat      TEXT DEFAULT '',
-            lastdat     TEXT DEFAULT '',
-            prepay      TEXT DEFAULT 'N',
-            billto      TEXT DEFAULT 'CUST',
-            billcod     TEXT DEFAULT '',
-            comp        TEXT DEFAULT 'N',
-            duedat      TEXT DEFAULT '',
+            donum           TEXT PRIMARY KEY,
+            dodat           TEXT DEFAULT '',
+            custmr          TEXT DEFAULT '',
+            cnsnee          TEXT DEFAULT '',
+            broker          TEXT DEFAULT '',
+            shipper         TEXT DEFAULT '',
+            vessel          TEXT DEFAULT '',
+            voyage          TEXT DEFAULT '',
+            dest            TEXT DEFAULT '',
+            papdat          TEXT DEFAULT '',
+            lastdat         TEXT DEFAULT '',
+            prepay          TEXT DEFAULT 'N',
+            billto          TEXT DEFAULT 'CUSTOMER',
+            billcod         TEXT DEFAULT '',
+            comp            TEXT DEFAULT 'N',
+            duedat          TEXT DEFAULT '',
             FOREIGN KEY (custmr)
-                REFERENCES party(code),
+                REFERENCES contact(code),
             FOREIGN KEY (cnsnee)
-                REFERENCES party(code),
+                REFERENCES contact(code),
             FOREIGN KEY (broker)
-                REFERENCES party(code),
+                REFERENCES contact(code),
             FOREIGN KEY (shipper)
-                REFERENCES party(code),
+                REFERENCES contact(code),
             FOREIGN KEY (billcod)
-                REFERENCES party(code)
+                REFERENCES contact(code)
         )
     """)
 
     # DO_CHARGES table - invoice line items
     # from_rate = Y means auto-filled from
-    # party_rates table
+    # contact_rates table
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS do_charges (
             id          INTEGER PRIMARY KEY
@@ -153,9 +151,9 @@ def create_tables():
         )
     """)
 
-    # DO_CONTAINER table - container tracking
-    # One DO can have multiple containers
-    # Drivers reference employee table
+# DO_CONTAINER table
+    # outdrvr, deldrvr, indrvr reference
+    # employee table (drivers AND sub-haulers)
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS do_container (
             id          INTEGER PRIMARY KEY

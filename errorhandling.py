@@ -83,7 +83,7 @@ def get_valid_string(prompt, max_length=None, required=True):
 
 # ---- DATABASE ERROR HANDLING ----
 
-def safe_add_customer(code, custnam, rate):
+def safe_add_customer(code, name, rate):
     """
     Safely adds a customer with full error handling.
     Handles duplicate keys, database errors, etc.
@@ -93,11 +93,11 @@ def safe_add_customer(code, custnam, rate):
         conn = sqlite3.connect("arts.db")
         cursor = conn.cursor()
         cursor.execute("""
-            INSERT INTO customer (code, lookupid, custnam, rate)
+            INSERT INTO customer (code, lookupid, name, rate)
             VALUES (?, ?, ?, ?)
-        """, (code, code, custnam, rate))
+        """, (code, code, name, rate))
         conn.commit()
-        print(f"  ✅ Customer added: {custnam}")
+        print(f"  ✅ Customer added: {name}")
         return True
 
     except sqlite3.IntegrityError:

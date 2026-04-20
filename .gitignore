@@ -20,3 +20,32 @@ Desktop.ini
 *.tmp
 *.log
 reports/
+
+# Legacy Clipper source files
+# Removed for client privacy
+*.DBF
+*.dbf
+*.NTX
+*.ntx
+*.NDX
+*.ndx
+*.PRG
+*.prg
+*.MEM
+*.mem
+*.BAT
+*.bat
+*.EXE
+*.exe
+*.OBJ
+*.obj
+*.PCX
+*.pcx
+*.FXP
+*.fxp
+*.ZIP
+*.zip
+*.xlk
+*.xlsx
+ARTS/
+ARTSPRG/

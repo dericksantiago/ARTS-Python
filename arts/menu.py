@@ -6,8 +6,9 @@
 
 from .utils.functions import show_header, show_footer
 from .utils.functions import press_any_key, confirm
-from .modules.customers import customer_menu
+from .modules.contacts import customer_menu, broker_menu
 from datetime import datetime
+from .modules.contacts import (customer_menu, broker_menu)
 
 def main_menu():
     """
@@ -55,9 +56,8 @@ def main_menu():
             customer_menu()
 
         elif choice == "6":
-            print("\n  🚧 Broker Table — Coming Soon!")
-            press_any_key()
-
+            broker_menu()
+        
         elif choice == "7":
             print("\n  🚧 Employee Table — Coming Soon!")
             press_any_key()

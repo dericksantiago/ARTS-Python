@@ -4,8 +4,10 @@
 # Converted from FUNCTION.PRG / BOXHEAD.PRG
 # ============================================
 
+from .database import get_connection
 from datetime import datetime
 from .errors import InvalidDate, InvalidAmount
+
 
 # ---- DISPLAY FUNCTIONS ----
 
@@ -173,56 +175,30 @@ def calc_balance(original, amount_paid):
     """Calculates remaining balance"""
     return round(float(original) - float(amount_paid), 2)
 
-# Party type codes
-PARTY_TYPES = {
-    "C" : "Customer",
-    "B" : "Broker",
-    "X" : "Both (Customer & Broker)"
-}
-
-# Bill To options
-BILLTO_OPTIONS = {
-    "CUST" : "Customer",
-    "CONS" : "Consignee",
-    "BROK" : "Broker",
-    "SHPR" : "Shipper"
-}
-
-def find_party(code):
-    """Find any party by code"""
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        "SELECT * FROM party WHERE code = ?",
-        (code,))
-    row = cursor.fetchone()
-    conn.close()
-    return dict(row) if row else None
-
-def search_parties(term, party_type=None):
+def search_contacts(term, contact_type=None):
     """
-    Search parties by name or lookupid.
-    party_type: C=Customers only,
+    Search contacts by name or lookupid.
+    contact_type: C=Customers only,
                 B=Brokers only,
-                None=All parties
+                None=All contacts
     """
     conn = get_connection()
     cursor = conn.cursor()
 
-    if party_type:
+    if contact_type:
         cursor.execute("""
-            SELECT * FROM party
+            SELECT * FROM contact
             WHERE (name LIKE ?
             OR lookupid LIKE ?
             OR code LIKE ?)
-            AND party_type IN (?, 'X')
+            AND contact_type IN (?, 'X')
             AND active = 'Y'
             ORDER BY name
         """, (f"%{term}%", f"%{term}%",
-              f"%{term}%", party_type))
+              f"%{term}%", contact_type))
     else:
         cursor.execute("""
-            SELECT * FROM party
+            SELECT * FROM contact
             WHERE (name LIKE ?
             OR lookupid LIKE ?
             OR code LIKE ?)
@@ -235,12 +211,12 @@ def search_parties(term, party_type=None):
     conn.close()
     return [dict(r) for r in rows]
 
-def get_billing_party(billto, custmr,
+def get_billing_contact(billto, custmr,
                       cnsnee, broker, shipper):
     """
-    Resolves billing party code based on
+    Resolves billing contact code based on
     BILL TO selection.
-    Business Rule: Any party can pay the bill.
+    Business Rule: Any contact can pay the bill.
     """
     mapping = {
         "CUST" : custmr,
@@ -249,4 +225,102 @@ def get_billing_party(billto, custmr,
         "SHPR" : shipper
     }
     billcod = mapping.get(billto, custmr)
-    return find_party(billcod)
+    return find_contact(billcod)
+
+# ---- CODE GENERATION FUNCTIONS ----
+
+def generate_lookup_id(name):
+    """
+    Generates lookup ID from name.
+    Takes first 7 chars, removes spaces,
+    uppercase.
+    e.g. "Karl Schroff & Associates" → "KARLSCH"
+    """
+    clean = ''.join(
+        c for c in name
+        if c.isalnum()).upper()
+    return clean[:7]
+
+def generate_next_code(table_name):
+    """
+    Generates next available 4-digit code.
+    Finds highest existing code and adds 1.
+    e.g. if highest is 0489 → returns 0490
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(f"""
+            SELECT MAX(CAST(code AS INTEGER))
+            FROM {table_name}
+        """)
+        row = cursor.fetchone()
+        max_code = row[0] if row[0] else 0
+        next_code = max_code + 1
+        return str(next_code).zfill(4)
+    except:
+        return "0001"
+    finally:
+        conn.close()
+
+def generate_next_donum():
+    """
+    Generates next Delivery Order number.
+    9 digits, zero padded.
+    e.g. 000056648
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT MAX(CAST(donum AS INTEGER))
+            FROM delivery_order
+        """)
+        row = cursor.fetchone()
+        max_num = row[0] if row[0] else 0
+        next_num = max_num + 1
+        return str(next_num).zfill(9)
+    except:
+        return "000000001"
+    finally:
+        conn.close()
+
+
+# Contact types
+CONTACT_TYPES = {
+    "CUSTOMER" : "Customer",
+    "BROKER"   : "Broker",
+    "TERMINAL" : "Terminal/Shipper",
+    "BOTH"     : "Customer & Broker"
+}
+
+# Employee types
+EMPLOYEE_TYPES = {
+    "D" : "Driver",
+    "S" : "Sub-hauler"
+}
+
+# Bill To options
+BILLTO_OPTIONS = {
+    "CUSTOMER"  : "Customer",
+    "CONSIGNEE" : "Consignee",
+    "BROKER"    : "Broker",
+    "SHIPPER"   : "Shipper/Terminal"
+}
+
+# Charge types
+CHARGE_TYPES = [
+    "RATE",
+    "CONGESTION",
+    "PORT FEE",
+    "ADMIN FEE",
+    "DROP CHG",
+    "OVERWEIGHT",
+    "GENSET",
+    "REEFER",
+    "YARD",
+    "TRANSFER FEE",
+    "MISC 1",
+    "MISC 2",
+    "MISC 3",
+]

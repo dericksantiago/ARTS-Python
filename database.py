@@ -36,7 +36,7 @@ def create_tables():
         CREATE TABLE IF NOT EXISTS customer (
             code        TEXT PRIMARY KEY,
             lookupid    TEXT,
-            custnam     TEXT,
+            name     TEXT,
             street      TEXT,
             city        TEXT,
             zip         TEXT,
@@ -54,7 +54,7 @@ def create_tables():
         CREATE TABLE IF NOT EXISTS broker (
             code        TEXT PRIMARY KEY,
             lookupid    TEXT,
-            brkrnam     TEXT,
+            name     TEXT,
             street      TEXT,
             city        TEXT,
             zip         TEXT,
@@ -142,7 +142,7 @@ def create_tables():
 
 # ---- INSERT FUNCTIONS ----
 
-def add_customer(code, lookupid, custnam, street="",
+def add_customer(code, lookupid, name, street="",
                  city="", zip="", phone="", fax="",
                  attn="", shipto="", shipfm="", rate=0):
     """Adds a new customer - like APPEND BLANK + field updates in Clipper"""
@@ -152,10 +152,10 @@ def add_customer(code, lookupid, custnam, street="",
         cursor.execute("""
             INSERT INTO customer VALUES
             (?,?,?,?,?,?,?,?,?,?,?,?)
-        """, (code, lookupid, custnam, street, city,
+        """, (code, lookupid, name, street, city,
               zip, phone, fax, attn, shipto, shipfm, rate))
         conn.commit()
-        print(f"  ✅ Customer added: {custnam}")
+        print(f"  ✅ Customer added: {name}")
     except sqlite3.IntegrityError:
         print(f"  ⚠️  Customer code {code} already exists!")
     finally:
@@ -187,7 +187,7 @@ def get_all_customers():
     """Returns all customers - like USE CUSTOMER / LIST in Clipper"""
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM customer ORDER BY custnam")
+    cursor.execute("SELECT * FROM customer ORDER BY name")
     rows = cursor.fetchall()
     conn.close()
     return [dict(row) for row in rows]
@@ -212,7 +212,7 @@ def get_invoice_summary(ponum):
     cursor.execute("""
         SELECT
             i.*,
-            c.custnam,
+            c.name,
             COALESCE(SUM(p.amt), 0) as total_paid,
             i.origbal - COALESCE(SUM(p.amt), 0) as balance
         FROM invoice i
@@ -284,7 +284,7 @@ if __name__ == "__main__":
     print("\n  STEP 3: Looking up customer 0032...")
     customer = find_customer("0032")
     if customer:
-        print(f"  Found: {customer['custnam']}")
+        print(f"  Found: {customer['name']}")
         print(f"  City : {customer['city']}")
         print(f"  Rate : {format_currency(customer['rate'])}")
 
@@ -301,7 +301,7 @@ if __name__ == "__main__":
     print(f"  {'CODE':<6} {'NAME':<30} {'RATE':>10}")
     print("  " + "-" * 48)
     for c in customers:
-        print(f"  {c['code']:<6} {c['custnam']:<30} "
+        print(f"  {c['code']:<6} {c['name']:<30} "
               f"{format_currency(c['rate']):>10}")
 
     # Step 6 - Get payments for invoice
