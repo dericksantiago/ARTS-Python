@@ -91,6 +91,27 @@ def add_contact(contact_type="C"):
                            "ADD NEW contact"))
     print("  (Type \\ at any field to cancel)\n")
 
+    conn = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO contact VALUES
+            (?,?,?,?,?,?,?,?,?,?,'Y')
+            """, (code, lookupid, name,
+            street, city, zip_code,
+            phone, fax, attn, contact_type))
+            conn.commit()
+        print(f"  ✅ '{name}' added "
+            f"with code {code}!")
+            except sqlite3.IntegrityError:
+        print(f"  ⚠️  Code already exists!")
+            except Exception as e:
+    print(f"  ❌ Error: {e}")
+finally:
+    if conn:
+        conn.close()
+
     try:
         name = get_valid_string(
             "Name         (25 chars)  : ",
@@ -149,7 +170,7 @@ def add_contact(contact_type="C"):
 
         if not confirm(
             f"Add '{name}' as "
-            f"{CONTACT_TYPES.get(contact_type)}?"):
+            f"{CONTACT_TYPES.get(contact_type, 'Customer')}?"):
             print("  ❌ Cancelled.")
             return
 
@@ -310,8 +331,8 @@ def contact_menu(contact_type=None):
         choice = input("  CHOICE: ").strip().upper()
 
         if choice == "A":
-            add_contact(contact_type or "C")
-            press_any_key()
+            def add_contact(contact_type="CUSTOMER"):
+                press_any_key()
 
         elif choice == "C":
             code = get_valid_string(
