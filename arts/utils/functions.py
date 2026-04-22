@@ -211,6 +211,17 @@ def search_contacts(term, contact_type=None):
     conn.close()
     return [dict(r) for r in rows]
 
+def find_contact(code):
+    """Find contact by code"""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT * FROM contact WHERE code = ?",
+        (code,))
+    row = cursor.fetchone()
+    conn.close()
+    return dict(row) if row else None
+
 def get_billing_contact(billto, custmr,
                       cnsnee, broker, shipper):
     """

@@ -77,40 +77,21 @@ def list_contacts(contact_type=None):
 
 # ---- contact OPERATIONS ----
 
-def add_contact(contact_type="C"):
+def add_contact(contact_type="CUSTOMER"):
     """
     Interactive contact entry screen.
-    contact_type: C=Customer, B=Broker, X=Both
+    contact_type: CUSTOMER, BROKER,
+                  TERMINAL, BOTH
     """
     titles = {
-        "C": "ADD NEW CUSTOMER",
-        "B": "ADD NEW BROKER",
-        "X": "ADD NEW contact"
+        "CUSTOMER" : "ADD NEW CUSTOMER",
+        "BROKER"   : "ADD NEW BROKER",
+        "TERMINAL" : "ADD NEW TERMINAL",
+        "BOTH"     : "ADD NEW CONTACT"
     }
-    show_header(titles.get(contact_type,
-                           "ADD NEW contact"))
+    show_header(titles.get(
+        contact_type, "ADD NEW CONTACT"))
     print("  (Type \\ at any field to cancel)\n")
-
-    conn = None
-    try:
-        conn = get_connection()
-        cursor = conn.cursor()
-        cursor.execute("""
-            INSERT INTO contact VALUES
-            (?,?,?,?,?,?,?,?,?,?,'Y')
-            """, (code, lookupid, name,
-            street, city, zip_code,
-            phone, fax, attn, contact_type))
-            conn.commit()
-        print(f"  ✅ '{name}' added "
-            f"with code {code}!")
-            except sqlite3.IntegrityError:
-        print(f"  ⚠️  Code already exists!")
-            except Exception as e:
-    print(f"  ❌ Error: {e}")
-finally:
-    if conn:
-        conn.close()
 
     try:
         name = get_valid_string(
@@ -174,24 +155,33 @@ finally:
             print("  ❌ Cancelled.")
             return
 
-        conn = get_connection()
-        cursor = conn.cursor()
-        cursor.execute("""
-            INSERT INTO contact VALUES
-            (?,?,?,?,?,?,?,?,?,?,'Y')
-        """, (code, lookupid, name,
-              street, city, zip_code,
-              phone, fax, attn, contact_type))
-        conn.commit()
-        conn.close()
-        print(f"  ✅ '{name}' added "
-              f"with code {code}!")
+        # Save to database
+        conn = None
+        try:
+            from ..utils.database import get_connection
+            conn = get_connection()
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO contact
+                VALUES (?,?,?,?,?,?,?,?,?,?,'Y')
+            """, (code, lookupid, name,
+                  street, city, zip_code,
+                  phone, fax, attn,
+                  contact_type))
+            conn.commit()
+            print(f"  ✅ '{name}' added "
+                  f"with code {code}!")
 
-    except sqlite3.IntegrityError:
-        print(f"  ⚠️  Code already exists!")
+        except sqlite3.IntegrityError:
+            print(f"  ⚠️  Code already exists!")
+        except Exception as e:
+            print(f"  ❌ Database error: {e}")
+        finally:
+            if conn:
+                conn.close()
+
     except Exception as e:
         print(f"  ❌ Error: {e}")
-
 def manage_contact_rates(code):
     """Manages rate schedule for a contact"""
     p = find_contact(code)
@@ -331,8 +321,8 @@ def contact_menu(contact_type=None):
         choice = input("  CHOICE: ").strip().upper()
 
         if choice == "A":
-            def add_contact(contact_type="CUSTOMER"):
-                press_any_key()
+            add_contact(contact_type)
+            press_any_key()
 
         elif choice == "C":
             code = get_valid_string(
